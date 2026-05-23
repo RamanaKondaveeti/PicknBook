@@ -3,6 +3,7 @@ WORKDIR /app
 
 ARG REACT_APP_API_BASE_URL=http://3.108.72.102:5007
 ENV REACT_APP_API_BASE_URL=$REACT_APP_API_BASE_URL
+ENV NODE_OPTIONS="--max-old-space-size=512"
 
 COPY package*.json ./
 RUN npm ci --no-audit --no-fund && npm cache clean --force
