@@ -3,13 +3,14 @@ WORKDIR /app
 
 ARG REACT_APP_API_BASE_URL=http://3.108.72.102:5007
 ENV REACT_APP_API_BASE_URL=$REACT_APP_API_BASE_URL
-ENV NODE_OPTIONS="--max-old-space-size=2048"
+ENV NODE_OPTIONS="--max-old-space-size=1024"
+ENV GENERATE_SOURCEMAP=false
 
 COPY package*.json ./
 RUN npm ci --no-audit --no-fund && npm cache clean --force
 
 COPY . .
-RUN npm run build
+RUN npm run build -- --max_old_space_size=1024
 
 FROM nginx:1.27-alpine AS runtime
 COPY nginx.conf /etc/nginx/conf.d/default.conf
