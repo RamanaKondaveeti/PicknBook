@@ -1,0 +1,53 @@
+services:
+  backend:
+    build:
+      context: ./backend
+    container_name: travel-site-backend
+    restart: unless-stopped
+    environment:
+      ASPNETCORE_ENVIRONMENT: "Production"
+      ASPNETCORE_URLS: "http://+:5007"
+      ConnectionStrings__DefaultConnection: "server=mysql;port=3306;database=pickandbookdb;user=root;password=root;Pooling=true;MinimumPoolSize=0;MaximumPoolSize=100;ConnectionTimeout=30;"
+      Cors__AllowedOrigins__0: "http://3.108.72.102:5000"
+      Cors__AllowedOrigins__1: "http://localhost:5000"
+      Cors__AllowedOrigins__2: "http://127.0.0.1:5000"
+    ports:
+      - "5007:5007"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    volumes:
+      - backend-wwwroot:/app/wwwroot
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        REACT_APP_API_BASE_URL: "http://3.108.72.102:5007"
+    container_name: travel-site-frontend
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    depends_on:
+      - backend
+
+  mysql:
+    image: mysql:8.4
+    container_name: travel-site-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: pickandbookdb
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  backend-wwwroot:
+  mysql-data:
