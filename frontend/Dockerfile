@@ -13,7 +13,7 @@ ENV NPM_CONFIG_LOGLEVEL=error
 COPY package*.json ./
 RUN npm ci --prefer-offline && npm cache clean --force
 
-COPY . .
+COPY . ./
 RUN npm run build
 
 FROM nginx:1.27-alpine AS runtime
