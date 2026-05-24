@@ -11,7 +11,7 @@ ENV NPM_CONFIG_PROGRESS=false
 ENV NPM_CONFIG_LOGLEVEL=error
 
 COPY package*.json ./
-RUN npm ci --omit=optional --prefer-offline && npm cache clean --force
+RUN npm ci --prefer-offline && npm cache clean --force
 
 COPY . .
 RUN npm run build
