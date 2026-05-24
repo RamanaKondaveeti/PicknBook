@@ -16,8 +16,8 @@ RUN dotnet publish "PickNBook.Api.csproj" \
     -c Release \
     -o /app/publish \
     /p:UseAppHost=false \
-    /p:PublishTrimmed=true \
-    /p:PublishSingleFile=false
+    /p:SelfContained=false \
+    /p:PublishTrimmed=false    
 
 # ---------- Stage 2: Runtime ----------
 FROM mcr.microsoft.com/dotnet/aspnet:9.0-alpine AS runtime
