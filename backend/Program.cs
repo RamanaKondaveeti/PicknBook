@@ -53,13 +53,24 @@ builder.Services.AddScoped<IJwtService, JwtService>();
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? throw new InvalidOperationException("DefaultConnection is not configured.");
 
-// Serverless Postgres can close idle sockets; keepalive + retries prevents transient failures.
+if (ContainsPlaceholderValue(connectionString))
+{
+    throw new InvalidOperationException(
+        "DefaultConnection still contains placeholder values. Set ConnectionStrings:DefaultConnection to a real MySQL connection string, for example via the ConnectionStrings__DefaultConnection environment variable.");
+}
+
+var mySqlServerVersionValue = builder.Configuration["MySql:ServerVersion"] ?? "8.0.36";
+if (!Version.TryParse(mySqlServerVersionValue, out var mySqlServerVersion))
+{
+    throw new InvalidOperationException(
+        $"MySql:ServerVersion must be a valid version number, but was '{mySqlServerVersionValue}'.");
+}
 
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseMySql(
         connectionString,
-        ServerVersion.AutoDetect(connectionString),
+        new MySqlServerVersion(mySqlServerVersion),
         mysqlOptions =>
         {
             // ✅ Equivalent of EnableRetryOnFailure
@@ -175,6 +186,12 @@ using (var scope = app.Services.CreateScope())
         {
             await Task.Delay(TimeSpan.FromSeconds(2 * attempt));
         }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException(
+                "Database startup failed while seeding initial data. Verify the MySQL host, port, database, username, password, firewall rules, and that the database server accepts connections from this app.",
+                ex);
+        }
     }
 }
 
@@ -195,4 +212,18 @@ app.MapControllers();
 
 
 app.Run();
+
+static bool ContainsPlaceholderValue(string connectionString)
+{
+    string[] placeholders =
+    [
+        "YOUR_HOSTINGER_MYSQL_HOST",
+        "YOUR_HOSTINGER_DATABASE",
+        "YOUR_HOSTINGER_USERNAME",
+        "YOUR_HOSTINGER_PASSWORD"
+    ];
+
+    return placeholders.Any(placeholder =>
+        connectionString.Contains(placeholder, StringComparison.OrdinalIgnoreCase));
+}
 
